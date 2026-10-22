@@ -1,5 +1,9 @@
 # TelePrism
 
+<!-- portfolio-card:start -->
+[![TelePrism — От заказа до выдачи. Вся цепочка в одном боте.](docs/portfolio/card.png)](docs/portfolio/card.svg)
+<!-- portfolio-card:end -->
+
 Telegram shop bot with crypto checkout. The example catalogue sells Telegram Stars packages; the interesting part is the payment pipeline: USDT TRC20 deposits through CryptAPI, polled rather than webhooked, with partial / over / late payment handling, manager fulfilment queue with SLA timers, outbox notifications and SQLite backups.
 
 Strict mypy, ruff, black, 28 tests. No HTTP server, no Redis, no Mini App: one long-polling process.
