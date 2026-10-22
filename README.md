@@ -4,11 +4,21 @@
 [![TelePrism — От заказа до выдачи. Вся цепочка в одном боте.](docs/portfolio/card.png)](docs/portfolio/card.svg)
 <!-- portfolio-card:end -->
 
-Telegram shop bot with crypto checkout. The example catalogue sells Telegram Stars packages; the interesting part is the payment pipeline: USDT TRC20 deposits through CryptAPI, polled rather than webhooked, with partial / over / late payment handling, manager fulfilment queue with SLA timers, outbox notifications and SQLite backups.
+Покупатель выбирает товар, получает реквизиты и ждёт выдачи. Менеджер видит оплаченный заказ в своей очереди и отмечает выполнение. TelePrism связывает эти шаги внутри Telegram; пример каталога построен на пакетах Telegram Stars.
 
-Strict mypy, ruff, black, 28 tests. No HTTP server, no Redis, no Mini App: one long-polling process.
+Основная задача проекта находится между выставленным счётом и выдачей товара. Сумма может прийти частично, с переплатой или после срока ожидания. Для этих случаев предусмотрены отдельные состояния платежа и дальнейшая обработка.
 
-## Flow
+## Как устроен путь заказа
+
+CryptAPI-провайдер обслуживает USDT TRC20, а poller проверяет поступления. После подтверждения заказ получает менеджер; для выдачи предусмотрены SLA-таймеры. Уведомления проходят через outbox, SQLite-база резервируется отдельным воркером.
+
+**Демонстрация:** `PAYMENTS_PROVIDER=mock` выдаёт вымышленный адрес и имитирует оплату через заданное время. Этот режим не обращается к блокчейну. Реальная интеграция подключается отдельно; запуск mock не подтверждает её работоспособность.
+
+Приложение работает одним long-polling процессом. HTTP-сервер, Redis и Mini App для этого сценария не требуются. В репозитории настроены strict mypy, ruff, black и тесты.
+
+Обсудить похожий проект: [sh3l.beer](https://sh3l.beer).
+
+## Жизненный цикл заказа
 
 ```
 /start → package or custom amount → order (DRAFT)
@@ -17,16 +27,16 @@ Strict mypy, ruff, black, 28 tests. No HTTP server, no Redis, no Mini App: one l
       → CONFIRMED → manager chat gets the order → manager marks delivered (proof optional) → buyer notified
 ```
 
-## Payment providers
+## Платёжные провайдеры
 
-| `PAYMENTS_PROVIDER` | What happens |
+| `PAYMENTS_PROVIDER` | Поведение |
 |---|---|
-| `cryptapi` | Real USDT TRC20 via [CryptAPI](https://cryptapi.io): set `CRYPTAPI_WALLET_ADDRESS` (your receiving wallet) |
-| `mock` | Demo mode: a fake address is issued and every order is "paid" in full after `MOCK_CONFIRM_SECONDS`. Nothing touches a blockchain. |
+| `cryptapi` | USDT TRC20 через [CryptAPI](https://cryptapi.io); задайте адрес своего кошелька получателя в `CRYPTAPI_WALLET_ADDRESS` |
+| `mock` | Вымышленный адрес и имитация полной оплаты через `MOCK_CONFIRM_SECONDS`, без обращения к блокчейну |
 
-Both implement `integrations/base.py:PaymentProvider` (`callback_url`, `create_address`, `logs`); services never import a concrete provider.
+Оба провайдера реализуют `integrations/base.py:PaymentProvider` с методами `callback_url`, `create_address`, `logs`. Сервисы зависят от этого протокола.
 
-## Run
+## Запуск
 
 ```bash
 cp example.env .env      # BOT_TOKEN, OWNER_IDS, MANAGER_CHAT_ID, PAYMENTS_PROVIDER
@@ -34,15 +44,15 @@ uv sync
 uv run teleprism
 ```
 
-Docker: `docker compose up -d --build` (SQLite in `./data`, backups rotated by `BACKUP_RETENTION_DAYS`).
+Через Docker: `docker compose up -d --build`. SQLite хранится в `./data`, срок хранения резервных копий задаёт `BACKUP_RETENTION_DAYS`.
 
-## Checks
+## Проверки
 
 ```bash
 uv run ruff check . && uv run black --check . && uv run mypy teleprism && uv run pytest
 ```
 
-## Layout
+## Структура проекта
 
 ```
 teleprism/app/
@@ -58,6 +68,6 @@ teleprism/app/
 docs/TECHTASK.md                      original spec (RU)
 ```
 
-## License
+## Лицензия
 
 MIT
