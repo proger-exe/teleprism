@@ -1,0 +1,60 @@
+[project]
+name = "teleprism"
+version = "0.1.0"
+description = "Telegram bot for selling Telegram Stars with CryptAPI polling and manual fulfillment."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "aiogram>=3.25",
+    "aiohttp>=3.10",
+    "aiosqlite>=0.20,<0.22",
+    "orjson>=3.10",
+    "pillow>=10.4",
+    "pydantic>=2.8",
+    "pydantic-settings>=2.4",
+    "qrcode>=7.4",
+    "raito>=1.4",
+    "structlog>=24.4",
+    "tenacity>=9.0",
+]
+
+[project.scripts]
+teleprism = "teleprism.app.bot:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "black>=24.8",
+    "mypy>=1.11",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.6",
+]
+
+[tool.black]
+line-length = 120
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC", "S", "SIM", "RET", "RUF"]
+ignore = ["ASYNC110", "ASYNC240", "RUF001", "S101"]
+exclude = [".venv", ".uv-cache", "data"]
+
+[tool.mypy]
+python_version = "3.11"
+plugins = ["pydantic.mypy"]
+strict = true
+ignore_missing_imports = true
+disable_error_code = ["union-attr", "call-overload"]
+exclude = ["data/"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
